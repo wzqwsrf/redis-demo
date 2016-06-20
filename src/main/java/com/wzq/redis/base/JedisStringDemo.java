@@ -3,13 +3,14 @@ package com.wzq.redis.base;
 import redis.clients.jedis.Jedis;
 
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Author: zhenqing.wang <wangzhenqing1008@163.com>
  * Date: 2016-06-20 15:43:27
  * Description: Jedis基本用法
  */
-public class JedisDemo {
+public class JedisStringDemo {
 
     private Jedis jedis;
 
@@ -17,7 +18,7 @@ public class JedisDemo {
         jedis = new Jedis("127.0.0.1", 6379);
     }
 
-    public void stringDemo() {
+    public void getAndSet() {
         //get and set
         String res = jedis.set("name", "wangzq"); //set值，成功返回ok
         System.out.println(res); //"OK"
@@ -28,13 +29,17 @@ public class JedisDemo {
         System.out.println(res); //"wangzq"
         res = jedis.get("name");
         System.out.println(res); //"what's your name"
+    }
 
-        res = jedis.mset("name", "wangzq", "age", "28", "job", "engineer"); //set多个key值
+    public void mgetAndmset() {
+        String res = jedis.mset("name", "wangzq", "age", "28", "job", "engineer"); //set多个key值
         System.out.println(res); //"OK"
         List<String> resList = jedis.mget("name", "age");
         System.out.println(resList); //"[wangzq, 28]"
+    }
 
-        res = jedis.set("current", "2"); //需要赋值为数字
+    public void incrAnddecr() {
+        String res = jedis.set("current", "2"); //需要赋值为数字
         System.out.println(res); //"OK"
         long num = jedis.incr("current");
         System.out.println(num); //3
@@ -48,18 +53,24 @@ public class JedisDemo {
         num = jedis.decrBy("current", 3);
         System.out.println(num); //2
 
-        jedis.append("name","zhenqing");
+    }
+
+    public void appendAndSubstr() {
+        jedis.append("name", "zhenqing");
         System.out.println(jedis.get("name"));
 
-        res = jedis.substr("name",0,5);
+        String res = jedis.substr("name", 0, 5);
         System.out.println(res);
+    }
 
+    public void other() {
         jedis.del("name");
         System.out.println(jedis.get("name"));
-        jedis.setnx("name","qingqing");
+        jedis.setnx("name", "qingqing");
         System.out.println(jedis.get("name"));
 
-        jedis.setex("name", 10, "qq");
+        //设置超时时间
+        jedis.setex("name", 1, "qq");
         try {
             Thread.sleep(2000);
         } catch (InterruptedException e) {
@@ -68,11 +79,36 @@ public class JedisDemo {
         System.out.println(jedis.get("name"));
     }
 
+    //设置锁
+    public boolean acquireLock(String lock, long expire) {
+        long value = System.currentTimeMillis() + expire * 1000 + 1;
+        long acquire = jedis.setnx(lock, String.valueOf(value));
+        if (acquire == 1) { //可以设置，说明获得锁
+            return true;
+        }
+        String currentValue = jedis.get(lock);
+        if (currentValue != null && Long.valueOf(currentValue) < System.currentTimeMillis()) {
+            //如果currentValue超过当前时间，说明被其他线程设置锁了，获取不到
+            String oldValue = jedis.getSet(lock, String.valueOf(value));
+            if (oldValue.equals(currentValue)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    //释放锁
+    public void releaseLock(String lock){
+        long currentTime = System.currentTimeMillis();
+        if (currentTime < Long.parseLong(jedis.get(lock))){
+            jedis.del(lock);
+        }
+    }
+
     public static void main(String[] args) {
-        JedisDemo jedisDemo = new JedisDemo();
+        JedisStringDemo jedisDemo = new JedisStringDemo();
         jedisDemo.init();
-        jedisDemo.stringDemo();
-        System.out.println();
+        jedisDemo.other();
     }
 
 }
