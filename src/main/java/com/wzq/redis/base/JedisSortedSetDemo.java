@@ -2,7 +2,6 @@ package com.wzq.redis.base;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Tuple;
-import redis.clients.jedis.ZParams;
 
 import java.util.Set;
 
