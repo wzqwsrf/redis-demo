@@ -3,7 +3,6 @@ package com.wzq.redis.base;
 import redis.clients.jedis.Jedis;
 
 import java.util.List;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Author: zhenqing.wang <wangzhenqing1008@163.com>
