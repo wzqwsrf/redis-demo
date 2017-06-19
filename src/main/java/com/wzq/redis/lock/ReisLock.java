@@ -44,7 +44,6 @@ public class ReisLock {
         return 0L;
     }
 
-
     public static void main(String[] args) {
         //TODO
     }
